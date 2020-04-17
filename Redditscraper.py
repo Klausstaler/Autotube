@@ -12,39 +12,53 @@ NEW_COMMENT = 1
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
-visitedThreads = pickle.load(open("visited.pkl","rb"))
+
+class Frame:
+    def __init__(self, text, ID, imgpath):
+        self.text = text
+        self.id = ID
+        self.imgpath = imgpath
+        self.seq = 0
 
 def get_top(subreddit, n, timefilter):
     if timefilter not in ["day", "week", "month", "year", "all"]:
         raise ValueError("Wrong time filter! Set it to day, week, month, year or \"all\"")
-    with open("visited.pkl", "rb") as f:
-        visited = pickle.load(f)
+    with open("visited.txt", "r") as f:
+        visited = set([ID.strip() for ID in f.readlines()])
         f.close()
     sub = reddit.subreddit(subreddit).top(limit=n, time_filter=timefilter)
-    for post in sub:
-        if post not in visited:
-            post.comments.replace_more(threshold=2)
-            create_instr(post)
-            visited.add(post)
-    with open("visited.pkl", "wb") as f:
-        pickle.dump(f, visited)
-        f.close()
+    with open("visited.txt", "w") as f:
+        for post in sub:
+            if post not in visited and check_text(post.title):
+                post.comments.replace_more(threshold=2)
+                create_instr(post)
+                visited.add(post.id)
+                f.write(f"{post.id}\n")
+                f.flush()
+
 
 def create_instr(post):
     res = [post.title]
-    top_score = post.comments[0].score
     _create_instr(post.comments, 0, res)
     time = datetime.datetime.now()
-    f = open(f"{post}_{time.day}_{time.month}_{time.year}.pkl", "wb")
+    f = open(f"threads/{post}_{time.day}_{time.month}_{time.year}.pkl", "wb")
     pickle.dump(res, f)
     f.close()
     print(res)
 
 
-"""
-Creates a list of the different comments, adding special instructions in between.
-"""
+def check_text(text):
+    for word in ["shoot", "shit", "fuck", "nigg", "massacre"]:
+        if word in text.lower():
+            return False
+    return True
+
+
+
 def _create_instr(comments, prevScore, instructions):
+    """
+    Creates a list of the different comments, adding special instructions in between.
+    """
     for comment in comments:
         if isinstance(comment, MoreComments):
             continue
@@ -57,28 +71,12 @@ def _create_instr(comments, prevScore, instructions):
 
 
 def clean_str(text):
-    #new_text = [char for char in text if char not in ["*", "^", "\\", "'", "\""]]
-    #"""
+    text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
+                lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)
     new_text = []
-    flag = False
-    for i,char in enumerate(text):
+    for i, char in enumerate(text):
         if char == "\n" or char == "\t":
             new_text.append(".")
-            flag = False
-        elif char not in ["*", "^", "\\", "\""] and not flag:
+        elif char not in ["*", "^", "\\", "\"", "<", ">"]:
             new_text.append(char)
-    #"""
     return "".join(new_text)
-
-
-def print_top_comments(comments, nTabs, prevScore):
-    for comment in comments:
-        if isinstance(comment, MoreComments):
-            continue
-        if comment.score >= max(10, prevScore * 0.3) and comment.body not in ["[deleted]", "[removed]"]:
-            print("  " * nTabs, comment.body, comment.score)
-            comment.replies.replace_more(10)
-            print_top_comments(comment.replies, nTabs + 1, comment.score)
-
-
-get_top("askreddit", 1, "all")
