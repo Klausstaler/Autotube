@@ -66,8 +66,8 @@ def put_img(path, savepath):
     bg_w, bg_h = background.size
     img = Image.open(path, "r")
     img_w, img_h = img.size
-    new_w_fac = bg_w/(2*img_w)
-    new_h_fac = bg_h/(2*img_h)
+    new_w_fac = bg_w/(1.5*img_w)
+    new_h_fac = bg_h/(1.5*img_h)
     fac = min([new_h_fac, new_w_fac,1])
     print(fac)
     img = img.resize((int(img_w*fac), int(img_h*fac)))
