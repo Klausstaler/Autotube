@@ -25,6 +25,23 @@ im = im.crop((left, top, right, bottom)) # defines crop points
 im.save('screenshot0.png') # saves new cropped image
 element.screenshot("screenshot2.png")
 
+location = element.location_once_scrolled_into_view
+size = element.size
+x.driver.execute_script("arguments[0].scrollIntoView();", element)
+x.driver.execute_script("window.scrollBy(0,-88);")  # scroll up by 88 pxls to ignore the stupid banner
+print("At element")
+time.sleep(1)
+png = x.driver.get_screenshot_as_png()  # saves screenshot of entire page
+
+im = Image.open(BytesIO(png))  # uses PIL library to open image in memory
+#im.save("wholepage.png")
+left = location['x']
+top = location['y'] + 88
+right = location['x'] + size['width']
+bottom = location['y'] + size['height'] + 88
+im = im.crop((left, top, right, bottom))  # defines crop points
+im.save(path)  # saves new cropped image
+
 """
 location = element.location_once_scrolled_into_view
 size = element.size
