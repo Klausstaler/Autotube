@@ -2,6 +2,7 @@ import praw, os, pickle, datetime, re
 from praw.models import MoreComments
 from Screenshotter import Screenshotter
 from enum import Enum
+import time
 
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_REDDIT")
@@ -15,12 +16,15 @@ reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
 
+
 class TimeFilter(Enum):
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
     YEAR = "year"
     ALL = "all"
+
+
 class SortMethod(Enum):
     NEW = "new"
     BEST = "confidence"
@@ -28,6 +32,11 @@ class SortMethod(Enum):
     CONTROVERSIAL = "controversial"
     OLD = "old"
     QA = "qa"
+
+
+class UnsuitableThreadErr(Exception):
+    pass
+
 
 def _check_text(text):
     for word in ["shoot", "shit", "fuck", "nigg", "massacre"]:
@@ -59,7 +68,7 @@ class Subreddit:
         timefilter = TimeFilter(timefilter)
         with open("visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
-        top = self.sub.top(limit=n, time_filter=timefilter.value)
+        top = [post for post in self.sub.top(limit=n, time_filter=timefilter.value)]
         i = 0
         while i < len(top):
             post = top[i]
@@ -71,9 +80,11 @@ class Subreddit:
 
     def create_screenshots(self, post, order):
         order = SortMethod(order)
-        if post.id not in self.visited and _check_text(post.title):
-            self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/?sort={order.value}", post.id)
+        if post.id not in self.visited and not post.over_18 and _check_text(post.title):
+            self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/?sort={order.value}/",
+                                    post.id)
             print("Fetching comments...")
+            post.comment_sort = order.value
             post.comments.replace_more(limit=125)
             print("Comments fetched!")
             path = self._create_instr(post)
@@ -81,6 +92,10 @@ class Subreddit:
             with open("visited.txt", "a") as f:
                 f.write(f"{post.id}\n")
             return path
+        else:
+            raise UnsuitableThreadErr(
+                "Will not make screenshots. Either thread was already visited or has inappropiate "
+                "words in title!")
 
     def _create_instr(self, post):
         res = [[post.id, post.title]]
@@ -93,7 +108,7 @@ class Subreddit:
         f.close()
         return path[8:]
 
-    def _create_instr_help(self, comments, prevScore, instructions, count):
+    def _create_instr_help(self, comments, prevScore, instructions, lvl):
         """
         Creates a list of the different comments, adding special instructions in between.
         """
@@ -108,9 +123,11 @@ class Subreddit:
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
-                # self.sc.expand_comment(comment.id)
-                # comment.replies.replace_more(10)
-                # self._create_instr_help(comment.replies, comment.score, instructions, count+1)
-                # self.sc.driver.back()
-                # time.sleep(1)
-
+                if lvl > 1: continue
+                self.sc.expand_comment(comment.id)
+                comment.replies.replace_more(10)
+                self._create_instr_help(comment.replies, comment.score, instructions, lvl + 1)
+                self.sc.driver.back()
+                time.sleep(2)
+                self.sc.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
+                time.sleep(2.5)

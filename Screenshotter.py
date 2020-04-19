@@ -5,10 +5,8 @@ from PIL import Image
 import time
 from io import BytesIO
 
-# x.driver.find_element_by_xpath("//p[@class='_2HYsucNpMdUpYlGBMviq8M _23013peWUhznY89KuYPZKv ' and substring(text(), string-length(text()) - string-length('replies') +1) = 'replies']")
-# x.driver.execute_script("arguments[0].click();", arg)
 """
-TODO: Spiel herum bis Screenshots endlich gut aussehen und comments neu geladen werden können
+TODO: Swearword detector, abkürzungen ersetzen, screenshots genauer machen, automatisch thumbnails generieren
 """
 chrome_options = webdriver.ChromeOptions()
 prefs = {"profile.default_content_setting_values.notifications": 2}
@@ -80,7 +78,10 @@ class Screenshotter:
         self.driver.find_element_by_xpath(
             "//div[starts-with(@id,'moreComments') and @style='padding-left: 21px;']").click()
         """
-        if len(self.driver.page_source) > 300: time.sleep(5)
+        if len(self.driver.page_source) > 300:
+            time.sleep(2)
+            self.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
+            time.sleep(2.5)
 
     def screenshot_title(self, path):
         elem = self.driver.find_element_by_id(f"t3_{self.id}")
