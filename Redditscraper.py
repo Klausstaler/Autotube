@@ -60,7 +60,7 @@ class Subreddit:
         """
         Creates a list of the different comments, adding special instructions in between.
         """
-        for comment in comments:
+        for comment in comments[1:]:
             if isinstance(comment, MoreComments):
                 continue
             if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]",
