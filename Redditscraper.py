@@ -1,5 +1,8 @@
 import praw, os, pickle, datetime, re
 from praw.models import MoreComments
+from Screenshotter import Screenshotter
+from enum import Enum
+import time
 
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_REDDIT")
@@ -7,76 +10,124 @@ USER_AGENT = "Autotube"
 SCORE_THRESHOLD = 1000
 SCORE_COMMENT_RATIO = 0.3
 COMMENT_THRESHOLD = 100
-SUB_COMMENT = 2
-NEW_COMMENT = 1
+SUB_COMMENT = -2
+NEW_COMMENT = -1
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
 
-class Frame:
-    def __init__(self, text, ID, imgpath):
-        self.text = text
-        self.id = ID
-        self.imgpath = imgpath
-        self.seq = 0
 
-def get_top(subreddit, n, timefilter):
-    if timefilter not in ["day", "week", "month", "year", "all"]:
-        raise ValueError("Wrong time filter! Set it to day, week, month, year or \"all\"")
-    with open("visited.txt", "r") as f:
-        visited = set([ID.strip() for ID in f.readlines()])
-        f.close()
-    sub = reddit.subreddit(subreddit).top(limit=n, time_filter=timefilter)
-    with open("visited.txt", "w") as f:
-        for post in sub:
-            if post not in visited and check_text(post.title):
-                post.comments.replace_more(threshold=2)
-                create_instr(post)
-                visited.add(post.id)
-                f.write(f"{post.id}\n")
-                f.flush()
+class TimeFilter(Enum):
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
+    ALL = "all"
 
 
-def create_instr(post):
-    res = [post.title]
-    _create_instr(post.comments, 0, res)
-    time = datetime.datetime.now()
-    f = open(f"threads/{post}_{time.day}_{time.month}_{time.year}.pkl", "wb")
-    pickle.dump(res, f)
-    f.close()
-    print(res)
+class SortMethod(Enum):
+    NEW = "new"
+    BEST = "confidence"
+    TOP = "top"
+    CONTROVERSIAL = "controversial"
+    OLD = "old"
+    QA = "qa"
 
 
-def check_text(text):
+class UnsuitableThreadErr(Exception):
+    pass
+
+
+def _check_text(text):
     for word in ["shoot", "shit", "fuck", "nigg", "massacre"]:
         if word in text.lower():
             return False
     return True
 
 
-
-def _create_instr(comments, prevScore, instructions):
-    """
-    Creates a list of the different comments, adding special instructions in between.
-    """
-    for comment in comments:
-        if isinstance(comment, MoreComments):
-            continue
-        if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"]:
-            instructions.append(NEW_COMMENT if not prevScore else SUB_COMMENT)
-            text = clean_str(comment.body.strip())
-            instructions.append(text)
-            comment.replies.replace_more(10)
-            _create_instr(comment.replies, comment.score, instructions)
-
-
-def clean_str(text):
+def _clean_str(text):
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
-                lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)
+                  lambda x: re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)
     new_text = []
     for i, char in enumerate(text):
         if char == "\n" or char == "\t":
             new_text.append(".")
-        elif char not in ["*", "^", "\\", "\"", "<", ">"]:
+        elif char not in ["*", "^", "\\", "\"", "<", ">", "[", "]"]:
             new_text.append(char)
     return "".join(new_text)
+
+
+class Subreddit:
+    def __init__(self, subreddit):
+        self.subreddit = subreddit
+        self.sub = reddit.subreddit(subreddit)
+        with open("visited.txt", "r") as f:
+            self.visited = set([ID.strip() for ID in f.readlines()])
+
+    def get_top(self, n, timefilter):
+        timefilter = TimeFilter(timefilter)
+        with open("visited.txt", "r") as f:
+            self.visited = set([ID.strip() for ID in f.readlines()])
+        top = [post for post in self.sub.top(limit=n, time_filter=timefilter.value)]
+        i = 0
+        while i < len(top):
+            post = top[i]
+            if post.id in self.visited:
+                del top[i]
+            else:
+                i += 1
+        return top
+
+    def create_screenshots(self, post, order):
+        order = SortMethod(order)
+        if post.id not in self.visited and not post.over_18 and _check_text(post.title):
+            self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/?sort={order.value}/",
+                                    post.id)
+            print("Fetching comments...")
+            post.comment_sort = order.value
+            post.comments.replace_more(limit=125)
+            print("Comments fetched!")
+            path = self._create_instr(post)
+            self.visited.add(post.id)
+            with open("visited.txt", "a") as f:
+                f.write(f"{post.id}\n")
+            return path
+        else:
+            raise UnsuitableThreadErr(
+                "Will not make screenshots. Either thread was already visited or has inappropiate "
+                "words in title!")
+
+    def _create_instr(self, post):
+        res = [[post.id, post.title]]
+        self.sc.screenshot_title(f"tmp/screenshots/{post.id}")
+        self._create_instr_help(post.comments, 0, res, 1)
+        t = datetime.datetime.now()
+        path = f"threads/{post}_{t.day}_{t.month}_{t.year}.pkl"
+        f = open(path, "wb")
+        pickle.dump(res, f)
+        f.close()
+        return path[8:]
+
+    def _create_instr_help(self, comments, prevScore, instructions, lvl):
+        """
+        Creates a list of the different comments, adding special instructions in between.
+        """
+        for comment in comments:
+            if isinstance(comment, MoreComments):
+                continue
+            if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]",
+                                                                                  "[removed]"] and _check_text(
+                comment.body):
+                instructions.append([NEW_COMMENT if not prevScore else SUB_COMMENT, ""])
+                text = _clean_str(comment.body.strip())
+                instructions.append([comment.id, text])
+                print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
+                self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
+                if lvl > 1: continue
+                self.sc.expand_comment(comment.id)
+                comment.replies.replace_more(10)
+                self._create_instr_help(comment.replies, comment.score, instructions, lvl + 1)
+                self.sc.driver.back()
+                time.sleep(2)
+                self.sc.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
+                time.sleep(2.5)
