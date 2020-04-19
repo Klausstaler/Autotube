@@ -35,6 +35,7 @@ def create_video(filepath, ID):
     os.system(
         f"balcon -n \"{VOICE}\" -t \"Like and subscribe for good luck, you handsome gentleman.   ....\" -v {VOLUME} -w \"outro.wav\"")
     outro = AudioSegment.from_wav("outro.wav")
+    os.remove("tmp/files/outro.wav")
     audio += outro
     concat.write(f"file resources/images/outro.png\nduration {round(len(outro) / 1000, 2)}\n")
     concat.close()
