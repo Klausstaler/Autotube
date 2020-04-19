@@ -4,8 +4,8 @@ import os
 
 if __name__ == "__main__":
     #get_top("askreddit", 50, "all")
-    sub = Subreddit("askreddit")
-    sub.get_top(50, "all")
+    #sub = Subreddit("askreddit")
+    #sub.get_top(5, "all")
     paths = os.listdir("threads/")
     for path in paths:
         video_path = create_video("threads/" + path, path.split("_")[0])

@@ -30,13 +30,13 @@ class Subreddit:
         for post in top:
             print("POSTING")
             if post.id not in visited and self._check_text(post.title):
-                self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}", post.id)
+                self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/?sort=top", post.id)
                 print("Fetching comments...")
                 post.comments.replace_more(limit=125)
                 print("Comments fetched!")
                 self._create_instr(post)
                 visited.add(post.id)
-                with open("visited.txt", "w") as f:
+                with open("visited.txt", "a") as f:
                     f.write(f"{post.id}\n")
                     f.close()
 
@@ -48,7 +48,7 @@ class Subreddit:
 
     def _create_instr(self, post):
         res = [[post.id, post.title]]
-        self.sc.screenshot_title(f"screenshots/{post.id}")
+        self.sc.screenshot_title(f"tmp/screenshots/{post.id}")
         self._create_instr_help(post.comments, 0, res, 1)
         time = datetime.datetime.now()
         f = open(f"threads/{post}_{time.day}_{time.month}_{time.year}.pkl", "wb")
@@ -60,7 +60,7 @@ class Subreddit:
         """
         Creates a list of the different comments, adding special instructions in between.
         """
-        for comment in comments[1:]:
+        for comment in comments:
             if isinstance(comment, MoreComments):
                 continue
             if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]",
@@ -70,7 +70,7 @@ class Subreddit:
                 text = self._clean_str(comment.body.strip())
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
-                self.sc.screenshot_comment(comment.id, f"screenshots/{comment.id}")
+                self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
                 # self.sc.expand_comment(comment.id)
                 # comment.replies.replace_more(10)
                 # self._create_instr_help(comment.replies, comment.score, instructions, count+1)

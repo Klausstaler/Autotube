@@ -14,13 +14,14 @@ VOICE = "ScanSoft Daniel_Full_22kHz"
 
 
 def create_video(filepath, ID):
-    os.system(f"balcon -n \"{VOICE}\" -t \"r slash ask reddit by Robotainment\" -v {VOLUME} -w \"files/0.wav\"")
+    os.system(f"balcon -n \"{VOICE}\" -t \"r slash ask reddit by Robotainment\" -v {VOLUME} -w \"tmp/files/0.wav\"")
     concat = open("script.ffconcat", "w")
     concat.write("ffconcat version 1.0\n")
     music = random.choice(os.listdir("resources/music/"))
     music = AudioSegment.from_mp3(f"resources/music/{music}")
     music -= 25
     audio = AudioSegment.from_wav("files/0.wav")
+    os.remove("tmp/files/0.wav")
     audio += silence
     concat.write(f"file resources/images/outro.png\nduration {round(len(audio) / 1000, 2)}\n")
     with open(filepath, "rb") as f:
@@ -38,10 +39,10 @@ def create_video(filepath, ID):
     concat.write(f"file resources/images/outro.png\nduration {round(len(outro) / 1000, 2)}\n")
     concat.close()
     audio = audio.overlay(music, times=300)
-    audio.export(f"audio_files/{ID}.mp3", format="mp3")
+    audio.export(f"tmp/audio_files/{ID}.mp3", format="mp3")
     os.system(
-        f"ffmpeg -i script.ffconcat -i audio_files/{ID}.mp3 -c:a copy -c:v libx264 -pix_fmt yuv420p -vf fps=25 videos/{ID}.mp4")
-    os.remove(f"audio_files/{ID}.mp3")
+        f"ffmpeg -i script.ffconcat -i tmp/audio_files/{ID}.mp3 -c:a copy -c:v libx264 -pix_fmt yuv420p -vf fps=25 videos/{ID}.mp4")
+    os.remove(f"tmp/audio_files/{ID}.mp3")
     os.remove("script.ffconcat")
     return f"videos/{ID}.mp4"
 
@@ -53,11 +54,11 @@ def create_audio_img(val, concat):
     elif val[0] == -2:
         return silence
     else:
-        os.system(f"balcon -n \"{VOICE}\" -t \"{val[1]}\" -v {VOLUME} -w \"files/temp.wav\"")
-        s = AudioSegment.from_wav("files/temp.wav")
-        os.remove("files/temp.wav")
-        put_img(f"screenshots/{val[0]}.png", f"images/{val[0]}.png")
-        concat.write(f"file images/{val[0]}.png\nduration {round((len(s)) / 1000, 2)}\n")
+        os.system(f"balcon -n \"{VOICE}\" -t \"{val[1]}\" -v {VOLUME} -w \"tmp/files/tmp.wav\"")
+        s = AudioSegment.from_wav("tmp/files/tmp.wav")
+        os.remove("tmp/files/tmp.wav")
+        put_img(f"tmp/screenshots/{val[0]}.png", f"tmp/images/{val[0]}.png")
+        concat.write(f"file tmp/images/{val[0]}.png\nduration {round((len(s)) / 1000, 2)}\n")
         return s
 
 
@@ -66,11 +67,11 @@ def put_img(path, savepath):
     bg_w, bg_h = background.size
     img = Image.open(path, "r")
     img_w, img_h = img.size
-    new_w_fac = bg_w/(1.5*img_w)
-    new_h_fac = bg_h/(1.5*img_h)
-    fac = min([new_h_fac, new_w_fac,1])
+    new_w_fac = bg_w / (1.5 * img_w)
+    new_h_fac = bg_h / (1.5 * img_h)
+    fac = max(min([new_h_fac, new_w_fac]), 1)
     print(fac)
-    img = img.resize((int(img_w*fac), int(img_h*fac)))
+    img = img.resize((int(img_w * fac), int(img_h * fac)))
     img_w, img_h = img.size
     offset = ((bg_w - img_w) // 2, (bg_h - img_h) // 2)
     background.paste(img, offset)

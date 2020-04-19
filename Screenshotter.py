@@ -59,18 +59,18 @@ class Screenshotter:
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
         size = element.size
-        self.driver.execute_script("arguments[0].scrollIntoView(false);", element)
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        self.driver.execute_script("window.scrollBy(0,-88);")#scroll up by 88 pxls to ignore the stupid banner
         print("At element")
         time.sleep(1)
         png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
 
         im = Image.open(BytesIO(png))  # uses PIL library to open image in memory
-        # im.save("wholepage.png")
+        im.save("wholepage.png")
         left = location['x']
-        top = im.size[1] - size["height"]
+        top = location['y'] + 88
         right = location['x'] + size['width']
-        bottom = im.size[1]
-
+        bottom = location['y'] + size['height'] + 88
         im = im.crop((left, top, right, bottom))  # defines crop points
         im.save(path)  # saves new cropped image
 
@@ -83,7 +83,8 @@ class Screenshotter:
         if len(self.driver.page_source) > 300: time.sleep(5)
 
     def screenshot_title(self, path):
-        self.driver.find_element_by_id(f"t3_{self.id}").screenshot(path + ".png")
+        elem = self.driver.find_element_by_id(f"t3_{self.id}")
+        self._screenshot(elem, path + ".png")
 
     def _scrollpage(self):
 
