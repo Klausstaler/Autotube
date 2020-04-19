@@ -5,9 +5,7 @@ from PIL import Image
 import time
 from io import BytesIO
 
-"""
-TODO: Swearword detector, abkürzungen ersetzen, screenshots genauer machen, automatisch thumbnails generieren
-"""
+
 chrome_options = webdriver.ChromeOptions()
 prefs = {"profile.default_content_setting_values.notifications": 2}
 chrome_options.add_experimental_option("prefs", prefs)
@@ -64,7 +62,7 @@ class Screenshotter:
         png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
 
         im = Image.open(BytesIO(png))  # uses PIL library to open image in memory
-        im.save("wholepage.png")
+        #im.save("wholepage.png")
         left = location['x']
         top = location['y'] + 88
         right = location['x'] + size['width']
