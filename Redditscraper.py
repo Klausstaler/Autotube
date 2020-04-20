@@ -15,6 +15,13 @@ NEW_COMMENT = -1
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
+abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be right back", "lmk": "let me know",
+               "g2g": "got to go", "btw": "by the way", "rt": "retweet", "ama": "ask me anything",
+               "tbh": "to be honest",
+               "imo": "in my opinion", "imho": "in my humble opinion", "irl": "in real life",
+               "afaik": "as far as I know",
+               "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
+               "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back"}
 
 
 class TimeFilter(Enum):
@@ -47,14 +54,26 @@ def _check_text(text):
 
 def _clean_str(text):
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
-                  lambda x: re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)
+                  lambda x: re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)  # replace
+    # link with [url].com link
     new_text = []
     for i, char in enumerate(text):
         if char == "\n" or char == "\t":
             new_text.append(".")
         elif char not in ["*", "^", "\\", "\"", "<", ">", "[", "]"]:
-            new_text.append(char)
-    return "".join(new_text)
+            new_text.append(char.lower())
+    new_text = "".join(new_text)
+    text = []
+    for word in new_text.split():  # replaces abbreviations
+        stripped_word = word.strip(",.")
+        if stripped_word in abbrev_dict:
+            new_word = abbrev_dict[stripped_word]
+            if stripped_word != word:
+                new_word += "."
+            text.append(new_word)
+        else:
+            text.append(word)
+    return " ".join(text)
 
 
 class Subreddit:
@@ -85,7 +104,7 @@ class Subreddit:
                                     post.id)
             print("Fetching comments...")
             post.comment_sort = order.value
-            post.comments.replace_more(limit=125)
+            post.comments.replace_more(limit=72)
             print("Comments fetched!")
             path = self._create_instr(post)
             self.visited.add(post.id)
@@ -123,9 +142,9 @@ class Subreddit:
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
-                if lvl > 1: continue
+                if lvl > 1: continue # just fetch comments of comments, not comments^3
                 self.sc.expand_comment(comment.id)
-                comment.replies.replace_more(10)
+                comment.replies.replace_more(limit=3)
                 self._create_instr_help(comment.replies, comment.score, instructions, lvl + 1)
                 self.sc.driver.back()
                 time.sleep(2)

@@ -14,7 +14,7 @@ def _put_img(path, savepath):
     img_w, img_h = img.size
     new_w_fac = bg_w / (1.5 * img_w)
     new_h_fac = bg_h / (1.5 * img_h)
-    fac = max(min([new_h_fac, new_w_fac]), 1)
+    fac = min([new_h_fac, new_w_fac])
     print(fac)
     img = img.resize((int(img_w * fac), int(img_h * fac)))
     img_w, img_h = img.size

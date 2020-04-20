@@ -55,16 +55,15 @@ class Screenshotter:
         location = element.location_once_scrolled_into_view
         size = element.size
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        self.driver.execute_script("window.scrollBy(0,-95);")  # scroll up by 95 pxls to ignore the title banner
-        print("At element")
+        self.driver.execute_script("window.scrollBy(0,-96);")  # scroll up by 95 pxls to ignore the title banner
         time.sleep(1)
         png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
 
         im = Image.open(BytesIO(png))  # uses PIL library to open image in memory
         left = location['x']
-        top = location['y'] + 95
+        top = location['y'] + 96
         right = location['x'] + size['width']
-        bottom = location['y'] + size['height'] + 95
+        bottom = location['y'] + size['height'] + 96
         im = im.crop((left, top, right, bottom))  # defines crop points
         im.save(path)  # saves new cropped image
 
