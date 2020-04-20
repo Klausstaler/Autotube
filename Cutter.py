@@ -12,10 +12,10 @@ def _put_img(path, savepath):
     bg_w, bg_h = background.size
     img = Image.open(path, "r")
     img_w, img_h = img.size
-    new_w_fac = bg_w / (1.5 * img_w)
-    new_h_fac = bg_h / (1.5 * img_h)
+    scaling_fac = 1 if (img_w*1.5 >= bg_w or img_h*1.5 >= bg_h) else 1.5
+    new_w_fac = bg_w / (scaling_fac*img_w)
+    new_h_fac = bg_h / (scaling_fac*img_h)
     fac = min([new_h_fac, new_w_fac])
-    print(fac)
     img = img.resize((int(img_w * fac), int(img_h * fac)))
     img_w, img_h = img.size
     offset = ((bg_w - img_w) // 2, (bg_h - img_h) // 2)
