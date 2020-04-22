@@ -3,6 +3,7 @@ from praw.models import MoreComments
 from Screenshotter import Screenshotter
 from enum import Enum
 import time
+from Classifier import classify
 
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_REDDIT")
@@ -21,8 +22,8 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "imo": "in my opinion", "imho": "in my humble opinion", "irl": "in real life",
                "afaik": "as far as I know",
                "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
-               "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back"}
-
+               "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
+               "faq": "frequently asked questions"}
 
 class TimeFilter(Enum):
     DAY = "day"
@@ -99,8 +100,8 @@ class Subreddit:
 
     def create_screenshots(self, post, order):
         order = SortMethod(order)
-        if post.id not in self.visited and not post.over_18 and _check_text(post.title):
-            self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/?sort={order.value}/",
+        if post.id not in self.visited and not post.over_18 and not classify(post.title):
+            self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/", order.value,
                                     post.id)
             print("Fetching comments...")
             post.comment_sort = order.value
@@ -131,22 +132,26 @@ class Subreddit:
         """
         Creates a list of the different comments, adding special instructions in between.
         """
-        for comment in comments:
+        for i,comment in enumerate(comments):
             if isinstance(comment, MoreComments):
                 continue
-            if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]",
-                                                                                  "[removed]"] and _check_text(
-                comment.body):
+            if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
+                    and not classify(comment.body):
                 instructions.append([NEW_COMMENT if not prevScore else SUB_COMMENT, ""])
                 text = _clean_str(comment.body.strip())
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
+                print("Screenshotting comment...")
                 self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
                 if lvl > 1: continue # just fetch comments of comments, not comments^3
+                print("Expanding comments....")
                 self.sc.expand_comment(comment.id)
                 comment.replies.replace_more(limit=3)
+                print("Comments expanded!")
+                #input()
                 self._create_instr_help(comment.replies, comment.score, instructions, lvl + 1)
                 self.sc.driver.back()
                 time.sleep(2)
+                print("Back on original page, clicking on view entire discussion")
                 self.sc.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
-                time.sleep(2.5)
+                time.sleep(5 + 0.5*i)

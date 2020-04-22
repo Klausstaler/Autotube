@@ -13,9 +13,11 @@ SCROLL_PAUSE_TIME = 0.5
 
 
 class Screenshotter:
-    def __init__(self, url, id, darkmode=True):
+    def __init__(self, base_url, sort, id, darkmode=True):
         self.driver = webdriver.Chrome("chromedriver.exe", chrome_options=chrome_options)
-        self.driver.get(url)
+        self.driver.get(f"{base_url}")
+        self.url = self.driver.current_url
+        self.driver.get(f"{base_url}+?sort={sort}/")
         self.id = id
         if darkmode:
             self.driver.find_elements_by_class_name("header-user-dropdown")[0].click()
@@ -68,7 +70,7 @@ class Screenshotter:
         im.save(path)  # saves new cropped image
 
     def expand_comment(self, id):
-        self.driver.get(self.driver.current_url + f"{id}/")
+        self.driver.get(self.url + f"{id}/")
         """
         self.driver.find_element_by_xpath(
             "//div[starts-with(@id,'moreComments') and @style='padding-left: 21px;']").click()
