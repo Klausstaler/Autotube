@@ -2,10 +2,6 @@ import pickle, os, random
 from pydub import AudioSegment
 from PIL import Image
 
-s = "https://superuser.com/questions/617392/ffmpeg-image-sequence-with-various-durations"
-
-
-# ffmpeg -i script.ffconcat -i audio_files/test.mp3 -c:a copy -c:v libx264 -pix_fmt yuv420p -vf fps=25 out.mp4
 
 def _put_img(path, savepath):
     background = Image.open("resources/images/background.jpg")
