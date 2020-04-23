@@ -36,9 +36,9 @@ class Screenshotter:
     def __del__(self):
         self.driver.quit()
 
-    def screenshot_comment(self, id, path):
+    def screenshot_comment(self, ID, path):
         try:
-            elem = self._explicit_selector(By.ID, f"t1_{id}")
+            elem = self._explicit_selector(By.ID, f"t1_{ID}")
             self._screenshot(elem, path + ".png")
         except (NoSuchElementException, TimeoutException) as e:
             more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
@@ -46,7 +46,7 @@ class Screenshotter:
             ActionChains(self.driver).move_to_element(elem).perform()
             elem.click()
             self._scrollpage()
-            elem = self._explicit_selector(By.ID, f"t1_{id}")
+            elem = self._explicit_selector(By.ID, f"t1_{ID}")
             self._screenshot(elem, path + ".png")
         time.sleep(0.5)
 
