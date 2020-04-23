@@ -15,7 +15,7 @@ chrome_options.add_argument("--start-maximized")
 SCROLL_PAUSE_TIME = 0.5
 
 class Screenshotter:
-    def __init__(self, base_url, sort, id, darkmode=True, delay=60):
+    def __init__(self, base_url, sort, id, darkmode=True, delay=10):
         self.driver = webdriver.Chrome("chromedriver.exe", chrome_options=chrome_options)
         self.driver.get(f"{base_url}")
         self.url = self.driver.current_url
