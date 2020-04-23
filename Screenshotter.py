@@ -1,6 +1,9 @@
 from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from PIL import Image
 import time
 from io import BytesIO
@@ -10,7 +13,7 @@ prefs = {"profile.default_content_setting_values.notifications": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--start-maximized")
 SCROLL_PAUSE_TIME = 0.5
-
+delay = 3
 
 class Screenshotter:
     def __init__(self, base_url, sort, id, darkmode=True):
@@ -20,15 +23,15 @@ class Screenshotter:
         self.driver.get(f"{base_url}+?sort={sort}/")
         self.id = id
         if darkmode:
-            self.driver.find_elements_by_class_name("header-user-dropdown")[0].click()
-            time.sleep(0.5)
-            self.driver.find_elements_by_class_name("_3m4MQxMy4WfgIkMhHh-UAg")[0].click()
+            user_drop = WebDriverWait(self.driver, delay).until(EC.presence_of_element_located((By.CLASS_NAME, 'header-user-dropdown')))
+            user_drop.click()
+            nightmode = WebDriverWait(self.driver, delay).until(EC.presence_of_element_located((By.CLASS_NAME, '_3m4MQxMy4WfgIkMhHh-UAg')))
+            nightmode.click()
             self.driver.refresh()
-            time.sleep(0.5)
-        time.sleep(1)
-        self.driver.find_element_by_xpath("//button[text()='I Agree']").send_keys("\n")
-        time.sleep(1)
-        self.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
+        cookie_button = WebDriverWait(self.driver, delay).until(EC.presence_of_element_located((By.XPATH, "//button[text()='I Agree']")))
+        cookie_button.send_keys("\n")
+        discussion_b = WebDriverWait(self.driver, delay).until(EC.presence_of_element_located((By.XPATH, "//button[starts-with(text(),'View entire discussion')]")))
+        discussion_b.click()
         time.sleep(1.5)
 
     def __del__(self):
@@ -70,6 +73,8 @@ class Screenshotter:
         im.save(path)  # saves new cropped image
 
     def expand_comment(self, id):
+        self.driver.execute_script("window.open("");")
+        self.driver.switch_to.window(self.driver.window_handles[1])
         self.driver.get(self.url + f"{id}/")
         """
         self.driver.find_element_by_xpath(
