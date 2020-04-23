@@ -132,10 +132,14 @@ class Subreddit:
         """
         Creates a list of the different comments, adding special instructions in between.
         """
-        for i,comment in enumerate(comments):
+        comment_counter = 0
+        for comment in comments:
+            if comment_counter > 100:
+                print("Alrady saved more than hundred screenshots!... Gonna break outta here")
+                break
             if isinstance(comment, MoreComments):
                 continue
-            if comment.score >= max(20, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
+            if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
                     and not classify(comment.body):
                 instructions.append([NEW_COMMENT if not prevScore else SUB_COMMENT, ""])
                 text = _clean_str(comment.body.strip())
@@ -148,10 +152,8 @@ class Subreddit:
                 self.sc.expand_comment(comment.id)
                 comment.replies.replace_more(limit=3)
                 print("Comments expanded!")
-                #input()
                 self._create_instr_help(comment.replies, comment.score, instructions, lvl + 1)
-                self.sc.driver.back()
-                time.sleep(2)
-                print("Back on original page, clicking on view entire discussion")
-                self.sc.driver.find_element_by_xpath("//button[starts-with(text(),'View entire discussion')]").click()
-                time.sleep(5 + 0.5*i)
+                self.sc.driver.close()
+                self.sc.driver.switch_to.window(self.sc.driver.window_handles[0])
+                print("Back on original page")
+                comment_counter += 1
