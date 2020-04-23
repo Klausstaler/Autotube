@@ -46,9 +46,22 @@ class Screenshotter:
             ActionChains(self.driver).move_to_element(elem).perform()
             elem.click()
             self._scrollpage()
+            self._screenshot_comment(ID, path, 0)
+        time.sleep(0.5)
+
+    def _screenshot_comment(self, ID, path, d):
+        if d > 10:
+            raise NoSuchElementException
+        try:
             elem = self._explicit_selector(By.ID, f"t1_{ID}")
             self._screenshot(elem, path + ".png")
-        time.sleep(0.5)
+        except (NoSuchElementException, TimeoutException) as e:
+            more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
+            elem = self._explicit_selector(By.XPATH,  more_comments_path)
+            ActionChains(self.driver).move_to_element(elem).perform()
+            elem.click()
+            self._scrollpage()
+            self._screenshot_comment(ID, path, d+1)
 
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
