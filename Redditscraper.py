@@ -118,7 +118,7 @@ class Subreddit:
                 "words in title!")
 
     def _create_instr(self, post):
-        res = [[post.id, post.title]]
+        res = [[post.id, f"{post.title} .{post.selftext}"]]
         self.sc.screenshot_title(f"tmp/screenshots/{post.id}")
         self._create_instr_help(post.comments, 0, res, 1)
         t = datetime.datetime.now()
