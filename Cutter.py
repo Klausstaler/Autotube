@@ -3,6 +3,7 @@ from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 from PIL import Image
 from Redditscraper import AudioType
+import time
 
 def _put_img(path, savepath):
     background = Image.open("resources/images/background.jpg")
@@ -79,7 +80,7 @@ class VideoSetup:
 
     def _create_audio(self, text):
         try:
-            os.system(f"balcon -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol} -w \"tmp/audio_files/tmp.wav\"")
+            os.system(f"balcon -w tmp/audio_files/tmp.wav -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol}")
             s = AudioSegment.from_wav("tmp/audio_files/tmp.wav")
             os.remove("tmp/audio_files/tmp.wav")
         except CouldntDecodeError:
