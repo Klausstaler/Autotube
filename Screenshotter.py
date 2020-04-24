@@ -12,7 +12,7 @@ chrome_options = webdriver.ChromeOptions()
 prefs = {"profile.default_content_setting_values.notifications": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--start-maximized")
-# chrome_options.headless = True
+chrome_options.headless = True
 SCROLL_PAUSE_TIME = 0.5
 
 class Screenshotter:
