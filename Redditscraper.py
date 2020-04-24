@@ -11,8 +11,6 @@ USER_AGENT = "Autotube"
 SCORE_THRESHOLD = 1000
 SCORE_COMMENT_RATIO = 0.3
 COMMENT_THRESHOLD = 100
-SUB_COMMENT = -2
-NEW_COMMENT = -1
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
@@ -41,6 +39,9 @@ class SortMethod(Enum):
     OLD = "old"
     QA = "qa"
 
+class AudioType(Enum):
+    SILENCE = 2
+    TVSOUND = 1
 
 class UnsuitableThreadErr(Exception):
     pass
@@ -142,7 +143,7 @@ class Subreddit:
                 continue
             if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
                     and not classify(comment.body):
-                instructions.append([NEW_COMMENT if not prevScore else SUB_COMMENT, ""])
+                instructions.append([AudioType.TVSOUND if not prevScore else AudioType.SILENCE, ""])
                 text = _clean_str(comment.body.strip())
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)

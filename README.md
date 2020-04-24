@@ -5,8 +5,8 @@
 - [ ] make headless
 - [ ] generating own lo-fi hip hop beats
 - [x] clean string for nicer TtS
-- [ ] check if text will need more than one screenshot, then either discard or make multiple
+- [x] check if text will need more than one screenshot, then either discard or make multiple
 - [x] deal with pydub exceptions Couldntencode (retrying?)
 - [ ] channel banner and channel profile pic
-- [ ] make different comment types enum
+- [x] make different comment types enum
 - [x] better link cleaning

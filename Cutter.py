@@ -2,7 +2,7 @@ import pickle, os, random
 from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 from PIL import Image
-
+from Redditscraper import AudioType
 
 def _put_img(path, savepath):
     background = Image.open("resources/images/background.jpg")
@@ -59,10 +59,10 @@ class VideoSetup:
         return f"videos/{ID}.mp4"
 
     def create_audio_img(self, val, concat):
-        if val[0] == -1:
+        if val[0] == AudioType.TVSOUND:
             concat.write(f"file resources/images/tv.png\nduration {round(len(self.tv_sound) / 1000, 2)}\n")
             return self.tv_sound
-        elif val[0] == -2:
+        elif val[0] == AudioType.SILENCE:
             return self.silence[:1]
         else:
             s = self._create_audio(val[1])
