@@ -2,7 +2,7 @@ import praw, os, pickle, datetime, re
 from praw.models import MoreComments
 from Screenshotter import Screenshotter
 from enum import Enum
-import time
+from urllib.parse import urlparse
 from Classifier import classify
 
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
@@ -54,9 +54,10 @@ def _check_text(text):
 
 
 def _clean_str(text):
+    text = re.sub("http\S+", lambda match: urlparse(match.group()).hostname + " link", text)  # replace
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
-                  lambda x: re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link", text)  # replace
-    # link with [url].com link
+                  lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link",
+                  text) # link with [url].com link
     new_text = []
     for i, char in enumerate(text):
         if char == "\n" or char == "\t":
