@@ -67,7 +67,7 @@ class Screenshotter:
         location = element.location_once_scrolled_into_view
         size = element.size
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        self.driver.execute_script("window.scrollBy(0,-96);")  # scroll up by 95 pxls to ignore the title banner
+        self.driver.execute_script("window.scrollBy(0,-96);")  # scroll up by 95 pxls to ignore the title header
         png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
 
         im = Image.open(BytesIO(png))  # uses PIL library to open image in memory

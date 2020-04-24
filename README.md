@@ -9,3 +9,4 @@
 - [x] deal with pydub exceptions Couldntencode (retrying?)
 - [ ] channel banner and channel profile pic
 - [ ] make different comment types enum
+- [ ] let Screenshotter deal with the fact of subcomment/comment, s.t. we don't have to call him in Redditscrape.py
