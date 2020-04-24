@@ -1,5 +1,6 @@
 import pickle, os, random
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 from PIL import Image
 
 
@@ -65,8 +66,9 @@ class VideoSetup:
             return self.silence[:1]
         else:
             s = self._create_audio(val[1])
-            _put_img(f"tmp/screenshots/{val[0]}.png", f"tmp/images/{val[0]}.png")
-            concat.write(f"file tmp/images/{val[0]}.png\nduration {round((len(s)) / 1000, 2)}\n")
+            img_path = f"tmp/images/{val[0]}.png"
+            _put_img(f"tmp/screenshots/{val[0]}.png", img_path)
+            concat.write(f"file {img_path}\nduration {round((len(s)) / 1000, 2)}\n")
             return s
 
     def _cleanup(self):
@@ -76,7 +78,10 @@ class VideoSetup:
             os.remove(f"tmp/screenshots/{img}")
 
     def _create_audio(self, text):
-        os.system(f"balcon -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol} -w \"tmp/audio_files/tmp.wav\"")
-        s = AudioSegment.from_wav("tmp/audio_files/tmp.wav")
-        os.remove("tmp/audio_files/tmp.wav")
+        try:
+            os.system(f"balcon -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol} -w \"tmp/audio_files/tmp.wav\"")
+            s = AudioSegment.from_wav("tmp/audio_files/tmp.wav")
+            os.remove("tmp/audio_files/tmp.wav")
+        except CouldntDecodeError:
+            return self._create_audio(text)  # simply retrying to decode works fine
         return s
