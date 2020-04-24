@@ -57,12 +57,12 @@ def _clean_str(text):
     text = re.sub("http\S+", lambda match: urlparse(match.group()).hostname + " link", text)  # replace
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
                   lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link",
-                  text) # link with [url].com link
+                  text)  # link with [url].com link
     new_text = []
     for i, char in enumerate(text):
         if char == "\n" or char == "\t":
             new_text.append(".")
-        elif char not in ["*", "^", "\\", "\"", "<", ">", "[", "]"]:
+        elif char not in "/’()”*^\\\"<>[]":
             new_text.append(char.lower())
     new_text = "".join(new_text)
     text = []
