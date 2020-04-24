@@ -12,6 +12,7 @@ chrome_options = webdriver.ChromeOptions()
 prefs = {"profile.default_content_setting_values.notifications": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--start-maximized")
+# chrome_options.headless = True
 SCROLL_PAUSE_TIME = 0.5
 
 class Screenshotter:
@@ -42,7 +43,7 @@ class Screenshotter:
             self._screenshot(elem, path + ".png")
         except (NoSuchElementException, TimeoutException) as e:
             more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
-            elem = self._explicit_selector(By.XPATH,  more_comments_path)
+            elem = self._explicit_selector(By.XPATH, more_comments_path)
             ActionChains(self.driver).move_to_element(elem).perform()
             elem.click()
             self._scrollpage()
@@ -57,25 +58,42 @@ class Screenshotter:
             self._screenshot(elem, path + ".png")
         except (NoSuchElementException, TimeoutException) as e:
             more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
-            elem = self._explicit_selector(By.XPATH,  more_comments_path)
+            elem = self._explicit_selector(By.XPATH, more_comments_path)
             ActionChains(self.driver).move_to_element(elem).perform()
             elem.click()
             self._scrollpage()
-            self._screenshot_comment(ID, path, d+1)
+            self._screenshot_comment(ID, path, d + 1)
 
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
         size = element.size
+        im = Image.new("RGB", (0, 0))
+        HEADER_HEIGHT = 96
+        TAB_HEIGHT = 925
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
-        self.driver.execute_script("window.scrollBy(0,-96);")  # scroll up by 95 pxls to ignore the title header
-        png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
-
-        im = Image.open(BytesIO(png))  # uses PIL library to open image in memory
-        left = location['x']
-        top = location['y'] + 96
-        right = location['x'] + size['width']
-        bottom = location['y'] + size['height'] + 96
-        im = im.crop((left, top, right, bottom))  # defines crop points
+        self.driver.execute_script(
+            f"window.scrollBy(0,-{HEADER_HEIGHT});")  # scroll up by 96 pxls to ignore the title header
+        while size["height"] > 0:  # stitch comment pieces together until we screenshotted whole comment
+            png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
+            new_img = Image.open(BytesIO(png))  # uses PIL library to open image in memory
+            left = location['x']
+            top = HEADER_HEIGHT
+            right = location['x'] + size['width']
+            sc_height = size['height'] + HEADER_HEIGHT
+            max_sc_height = min(sc_height, TAB_HEIGHT)  # the maximum height of the comment is limited by the tab
+            bottom = max_sc_height  # size and the comment size
+            new_img = new_img.crop((left, top, right, bottom))  # defines crop points
+            (width1, height1) = im.size
+            (width2, height2) = new_img.size
+            result_width = max(width1, width2)
+            result_height = height1 + height2
+            res = Image.new("RGB", (result_width, result_height))
+            res.paste(im=im, box=(0, 0))
+            res.paste(im=new_img, box=(0, height1))  # create new img with the old img and new comment piece
+            im = res
+            height_decrease = min(sc_height, TAB_HEIGHT - HEADER_HEIGHT)
+            size["height"] -= height_decrease
+            self.driver.execute_script(f"window.scrollBy(0,{height_decrease});")
         im.save(path)  # saves new cropped image
 
     def expand_comment(self, id):
@@ -89,7 +107,7 @@ class Screenshotter:
 
     def screenshot_title(self, path):
         elem = self._explicit_selector(By.ID, f"t3_{self.id}")
-        #elem = self.driver.find_element_by_id(f"t3_{self.id}")
+        # elem = self.driver.find_element_by_id(f"t3_{self.id}")
         self._screenshot(elem, path + ".png")
 
     def _scrollpage(self):
