@@ -4,6 +4,7 @@ from Screenshotter import Screenshotter
 from enum import Enum
 from urllib.parse import urlparse
 from Classifier import classify
+from AudioType import AudioType
 
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_REDDIT")
@@ -39,19 +40,15 @@ class SortMethod(Enum):
     OLD = "old"
     QA = "qa"
 
-class AudioType(Enum):
-    SILENCE = 2
-    TVSOUND = 1
-
 class UnsuitableThreadErr(Exception):
     pass
 
 
 def _check_text(text):
-    for word in ["shoot", "shit", "fuck", "nigg", "massacre"]:
-        if word in text.lower():
-            return False
-    return True
+    for char in text:
+        if not (0 <= ord(char) <= 127):  # remove unicode chars
+            return True
+    return classify(text)
 
 
 def _clean_str(text):
@@ -127,7 +124,7 @@ class Subreddit:
         order = SortMethod(order)
         with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
-        if post.id not in self.visited and not post.over_18 and not classify(post.title):
+        if post.id not in self.visited and not post.over_18 and not _check_text(post.title):
             self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/", order.value,
                                     post.id)
             print("Fetching comments...")
@@ -167,7 +164,7 @@ class Subreddit:
             if isinstance(comment, MoreComments):
                 continue
             if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
-                    and not classify(comment.body):
+                    and not _check_text(comment.body):
                 instructions.append([AudioType.TVSOUND if not prevScore else AudioType.SILENCE, ""])
                 text = _clean_str(comment.body.strip())
                 instructions.append([comment.id, text])
