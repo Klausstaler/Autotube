@@ -60,7 +60,17 @@ def _clean_str(text):
                   lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link",
                   text)  # link with [url].com link
     new_text = []
+    char_buffer = []
     for i, char in enumerate(text):
+        if len(char_buffer) < 3:
+            char_buffer.append(char)
+        else:
+            char_buffer.pop(0)
+            char_buffer.append(char)
+            if len(set(char_buffer)) == 1:
+                continue
+            else:
+                pass
         if char == "\n" or char == "\t":
             new_text.append(".")
         elif char not in "/’()”*^\\\"<>[]":
@@ -79,16 +89,29 @@ def _clean_str(text):
     return " ".join(text)
 
 
+def _remove_parenthesis(string):
+    res = ''
+    count = 0
+    for i in string:
+        if i == '(':
+            count += 1
+        elif i == ')'and count > 0:
+            count -= 1
+        elif count == 0:
+            res += i
+    return res
+
+
 class Subreddit:
     def __init__(self, subreddit):
         self.subreddit = subreddit
         self.sub = reddit.subreddit(subreddit)
-        with open("visited.txt", "r") as f:
+        with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
 
     def get_top(self, n, timefilter):
         timefilter = TimeFilter(timefilter)
-        with open("visited.txt", "r") as f:
+        with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
         top = [post for post in self.sub.top(limit=n, time_filter=timefilter.value)]
         i = 0
@@ -102,6 +125,8 @@ class Subreddit:
 
     def create_screenshots(self, post, order):
         order = SortMethod(order)
+        with open("resources/visited.txt", "r") as f:
+            self.visited = set([ID.strip() for ID in f.readlines()])
         if post.id not in self.visited and not post.over_18 and not classify(post.title):
             self.sc = Screenshotter(f"https://reddit.com/r/{self.subreddit}/comments/{post.id}/", order.value,
                                     post.id)
@@ -111,7 +136,7 @@ class Subreddit:
             print("Comments fetched!")
             path = self._create_instr(post)
             self.visited.add(post.id)
-            with open("visited.txt", "a") as f:
+            with open("resources/visited.txt", "a") as f:
                 f.write(f"{post.id}\n")
             return path
         else:
@@ -137,7 +162,7 @@ class Subreddit:
         comment_counter = 0
         for comment in comments:
             if comment_counter > 100:
-                print("Alrady saved more than hundred screenshots!... Gonna break outta here")
+                print("Already saved more than hundred screenshots!... Gonna break outta here")
                 break
             if isinstance(comment, MoreComments):
                 continue
