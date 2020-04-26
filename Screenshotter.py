@@ -45,7 +45,7 @@ class Screenshotter:
             more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
             elem = self._explicit_selector(By.XPATH, more_comments_path)
             ActionChains(self.driver).move_to_element(elem).perform()
-            elem.click()
+            self.driver.execute_script("arguments[0].click();", elem)
             self._scrollpage()
             self._screenshot_comment(ID, path, 0)
         time.sleep(0.5)
@@ -72,7 +72,7 @@ class Screenshotter:
         TAB_HEIGHT = 925
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
         self.driver.execute_script(
-            f"window.scrollBy(0,-{HEADER_HEIGHT - location['y']});")  # scroll up by this amount to avoid header
+            f"window.scrollBy(0,{(-1)*HEADER_HEIGHT + location['y']});")  # scroll up by this amount to avoid header
         while size["height"] > 0:  # stitch comment pieces together until we screenshotted whole comment
             png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
             new_img = Image.open(BytesIO(png))  # uses PIL library to open image in memory
