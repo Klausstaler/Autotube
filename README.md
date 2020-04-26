@@ -11,3 +11,4 @@
 - [ ] channel banner and channel profile pic
 - [x] make different comment types enum
 - [x] better link cleaning
+- [ ] alternate btw colors in ThumbnailGen

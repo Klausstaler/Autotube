@@ -2,6 +2,10 @@ from PIL import Image, ImageFont, ImageDraw
 from enum import Enum
 import re
 
+IMG_HEIGHT = 720
+IMG_WIDTH = 1280
+
+
 class Color(Enum):
     WHITE = (255, 255, 255)
     ORANGE = (255, 128, 0)
@@ -13,7 +17,7 @@ class Color(Enum):
 def draw_text(img_draw, text, color):
     posList = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
     font = find_fontsize(img_draw, text)
-    num_rows = (720//img_draw.textsize(text, font)[1])
+    num_rows = (IMG_HEIGHT//img_draw.textsize(text, font)[1])
     text = format_text(text, num_rows, font)
     #for val in posList:
     #    img_draw.text((val[0], val[1]), text, Color.WHITE.value, font)
@@ -23,12 +27,12 @@ def find_fontsize(img_draw, text):
     font_size = 128
     font = ImageFont.truetype("C:/Windows/Fonts/ARLRDBD.TTF", font_size)
     text_size = img_draw.textsize(text, font)
-    num_rows = (720 // text_size[1])
-    while text_size[0] // num_rows >= 1280:
+    num_rows = (IMG_HEIGHT // text_size[1])
+    while text_size[0] // num_rows >= IMG_WIDTH:
         font_size -= 1
         font = ImageFont.truetype("C:/Windows/Fonts/ARLRDBD.TTF", font_size)
         text_size = img_draw.textsize(text, font)
-        num_rows = (720 // text_size[1])
+        num_rows = (IMG_HEIGHT // text_size[1])
     return font
 
 def format_text(text, num_rows, font):
@@ -55,10 +59,10 @@ def find_splitpoint(img_draw, text, font):
     while l <= r:
         mid = l + (r - l) // 2
         text_size = img_draw.textsize("".join(text[:mid]), font)
-        if text_size[0] <= 1280:
+        if text_size[0] <= IMG_WIDTH:
             l = mid + 1
             idx = mid
-        elif text_size[0] > 1280:
+        elif text_size[0] > IMG_WIDTH:
             r = mid - 1
     return idx
 
