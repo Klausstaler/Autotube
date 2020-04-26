@@ -72,7 +72,7 @@ class Screenshotter:
         TAB_HEIGHT = 925
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
         self.driver.execute_script(
-            f"window.scrollBy(0,-{HEADER_HEIGHT});")  # scroll up by 96 pxls to ignore the title header
+            f"window.scrollBy(0,-{HEADER_HEIGHT - location['y']});")  # scroll up by this amount to avoid header
         while size["height"] > 0:  # stitch comment pieces together until we screenshotted whole comment
             png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
             new_img = Image.open(BytesIO(png))  # uses PIL library to open image in memory
