@@ -2,7 +2,7 @@ import pickle, os, random
 from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 from PIL import Image
-from Redditscraper import AudioType
+from AudioType import AudioType
 import time
 
 def _put_img(path, savepath):
@@ -42,7 +42,7 @@ class VideoSetup:
             x = pickle.load(f)
             print(x)
             for i, val in enumerate(x):
-                print(f"Processing file {i + 1} out of {len(x)}..")
+                print(f"Processing file {i + 1} out of {len(x)}.., ID {val[0]}")
                 audio += self.create_audio_img(val, concat)
         audio += self.tv_sound
         concat.write(f"file resources/images/tv.png\nduration {round(len(self.tv_sound) / 1000, 2)}\n")
@@ -56,7 +56,7 @@ class VideoSetup:
             f"ffmpeg -i script.ffconcat -i tmp/audio_files/{ID}.mp3 -c:a copy -c:v libx264 -pix_fmt yuv420p -vf fps=25 videos/{ID}.mp4")
         os.remove(f"tmp/audio_files/{ID}.mp3")
         os.remove("script.ffconcat")
-        #self._cleanup()
+        self._cleanup()
         return f"videos/{ID}.mp4"
 
     def create_audio_img(self, val, concat):
