@@ -53,9 +53,9 @@ def _check_text(text):
 
 
 def _clean_str(text):
-    text = re.sub("http\S+", lambda match: urlparse(match.group()).hostname + " link", text)  # replace
+    text = re.sub("http\S+", lambda match: f" .. {urlparse(match.group()).hostname} link", text)  # replace
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
-                  lambda x:re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0] + " link",
+                  lambda x: " .. {} link".format("re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0]"),
                   text)  # link with [url].com link
     new_text = []
     char_buffer = []
@@ -67,8 +67,6 @@ def _clean_str(text):
             char_buffer.append(char)
             if len(set(char_buffer)) == 1:
                 continue
-            else:
-                pass
         if char == "\n" or char == "\t":
             new_text.append(".")
         elif char not in "/’()”*^\\\"<>[]\'":

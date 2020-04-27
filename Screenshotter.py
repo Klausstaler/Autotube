@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from PIL import Image
 from io import BytesIO
+import time
 
 chrome_options = webdriver.ChromeOptions()
 prefs = {"profile.default_content_setting_values.notifications": 2}
@@ -57,7 +58,7 @@ class Screenshotter:
             self.driver.execute_script("arguments[0].click();", elem)
             self._scrollpage()
             self._screenshot_comment(ID, path, 0)
-        self.driver.implicitly_wait(0.5)
+        time.sleep(0.5)
 
     def _screenshot_comment(self, ID, path, d):
         if d > 10:
@@ -76,7 +77,7 @@ class Screenshotter:
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
         if location['y'] > 3:
-            self.driver.implicitly_wait(3)
+            time.sleep(5)
             location = element.location_once_scrolled_into_view
         size = element.size
         im = Image.new("RGB", (0, 0))
@@ -126,7 +127,7 @@ class Screenshotter:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
             # Wait to load page
-            self.driver.implicitly_wait(SCROLL_PAUSE_TIME)
+            time.sleep(SCROLL_PAUSE_TIME)
 
             # Calculate new scroll height and compare with last scroll height
             new_height = self.driver.execute_script("return document.body.scrollHeight")
