@@ -79,7 +79,14 @@ class VideoSetup:
 
     def _create_audio(self, text):
         try:
-            os.system(f"balcon -w tmp/audio_files/tmp.wav -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol}")
+            if len(text) > 7000:
+                f = open("tmp/audio_files/tmp.txt", "w")
+                f.write(text)
+                f.close()
+                os.system(f"balcon -w tmp/audio_files/tmp.wav -n \"{self.voice}\" -f \"tmp/audio_files/tmp.txt\" -v {self.voice_vol}")
+                os.remove("tmp/audio_files/tmp.txt")
+            else:
+                os.system(f"balcon -w tmp/audio_files/tmp.wav -n \"{self.voice}\" -t \"{text}\" -v {self.voice_vol}")
             s = AudioSegment.from_wav("tmp/audio_files/tmp.wav")
             os.remove("tmp/audio_files/tmp.wav")
         except CouldntDecodeError:
