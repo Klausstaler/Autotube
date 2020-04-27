@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from PIL import Image
-import time
 from io import BytesIO
 
 chrome_options = webdriver.ChromeOptions()
@@ -14,6 +13,16 @@ chrome_options.add_experimental_option("prefs", prefs)
 chrome_options.add_argument("--start-maximized")
 #chrome_options.headless = True
 SCROLL_PAUSE_TIME = 0.5
+
+def _stitch_img(img1, img2):
+    (width1, height1) = img1.size
+    (width2, height2) = img2.size
+    result_width = max(width1, width2)
+    result_height = height1 + height2
+    res = Image.new("RGB", (result_width, result_height))
+    res.paste(im=img1, box=(0, 0))
+    res.paste(im=img2, box=(0, height1))  # create new img with the old img and new comment piece
+    return res
 
 class Screenshotter:
     def __init__(self, base_url, sort, id, darkmode=True, delay=10):
@@ -48,7 +57,7 @@ class Screenshotter:
             self.driver.execute_script("arguments[0].click();", elem)
             self._scrollpage()
             self._screenshot_comment(ID, path, 0)
-        time.sleep(0.5)
+        self.driver.implicitly_wait(0.5)
 
     def _screenshot_comment(self, ID, path, d):
         if d > 10:
@@ -66,6 +75,9 @@ class Screenshotter:
 
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
+        if location['y'] > 3:
+            self.driver.implicitly_wait(3)
+            location = element.location_once_scrolled_into_view
         size = element.size
         im = Image.new("RGB", (0, 0))
         HEADER_HEIGHT = 96
@@ -73,6 +85,7 @@ class Screenshotter:
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
         self.driver.execute_script(
             f"window.scrollBy(0,{(-1)*HEADER_HEIGHT + location['y']});")  # scroll up by this amount to avoid header
+        print((-1)*HEADER_HEIGHT + location['y'])
         while size["height"] > 0:  # stitch comment pieces together until we screenshotted whole comment
             png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
             new_img = Image.open(BytesIO(png))  # uses PIL library to open image in memory
@@ -83,14 +96,7 @@ class Screenshotter:
             max_sc_height = min(sc_height, TAB_HEIGHT)  # the maximum height of the comment is limited by the tab
             bottom = max_sc_height  # size and the comment size
             new_img = new_img.crop((left, top, right, bottom))  # defines crop points
-            (width1, height1) = im.size
-            (width2, height2) = new_img.size
-            result_width = max(width1, width2)
-            result_height = height1 + height2
-            res = Image.new("RGB", (result_width, result_height))
-            res.paste(im=im, box=(0, 0))
-            res.paste(im=new_img, box=(0, height1))  # create new img with the old img and new comment piece
-            im = res
+            im = _stitch_img(im, new_img)
             height_decrease = min(sc_height, TAB_HEIGHT - HEADER_HEIGHT)
             size["height"] -= height_decrease
             self.driver.execute_script(f"window.scrollBy(0,{height_decrease});")
@@ -120,7 +126,7 @@ class Screenshotter:
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
             # Wait to load page
-            time.sleep(SCROLL_PAUSE_TIME)
+            self.driver.implicitly_wait(SCROLL_PAUSE_TIME)
 
             # Calculate new scroll height and compare with last scroll height
             new_height = self.driver.execute_script("return document.body.scrollHeight")
