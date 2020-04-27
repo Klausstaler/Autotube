@@ -1,6 +1,7 @@
 import praw, os, pickle, datetime, re
 from praw.models import MoreComments
 from Screenshotter import Screenshotter
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from enum import Enum
 from urllib.parse import urlparse
 from Classifier import classify
@@ -70,7 +71,7 @@ def _clean_str(text):
                 pass
         if char == "\n" or char == "\t":
             new_text.append(".")
-        elif char not in "/’()”*^\\\"<>[]":
+        elif char not in "/’()”*^\\\"<>[]\'":
             new_text.append(char.lower())
     new_text = "".join(new_text)
     text = []
@@ -142,7 +143,7 @@ class Subreddit:
                 "words in title!")
 
     def _create_instr(self, post):
-        res = [[post.id, f"{post.title} .{post.selftext}"]]
+        res = [[post.id, _clean_str(f"{post.title} .{post.selftext}")]]
         self.sc.screenshot_title(f"tmp/screenshots/{post.id}")
         self._create_instr_help(post.comments, 0, res, 1)
         t = datetime.datetime.now()
@@ -170,7 +171,11 @@ class Subreddit:
                 instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 print("Screenshotting comment...")
-                self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
+                try:
+                    self.sc.screenshot_comment(comment.id, f"tmp/screenshots/{comment.id}")
+                except (NoSuchElementException, TimeoutException):
+                    print("Something went wrong! Gonna skip this comment...")
+                    continue
                 if lvl > 1: continue # just fetch comments of comments, not comments^3
                 print("Expanding comments....")
                 self.sc.expand_comment(comment.id)
