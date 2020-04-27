@@ -3,7 +3,6 @@ from pydub import AudioSegment
 from pydub.exceptions import CouldntDecodeError
 from PIL import Image
 from AudioType import AudioType
-import time
 
 def _put_img(path, savepath):
     background = Image.open("resources/images/background.jpg")

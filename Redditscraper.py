@@ -166,9 +166,7 @@ class Subreddit:
                 continue
             if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
                     and not _check_text(comment.body):
-                instructions.append([AudioType.TVSOUND if not prevScore else AudioType.SILENCE, ""])
                 text = _clean_str(comment.body.strip())
-                instructions.append([comment.id, text])
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 print("Screenshotting comment...")
                 try:
@@ -176,6 +174,8 @@ class Subreddit:
                 except (NoSuchElementException, TimeoutException):
                     print("Something went wrong! Gonna skip this comment...")
                     continue
+                instructions.append([AudioType.TVSOUND if not prevScore else AudioType.SILENCE, ""])
+                instructions.append([comment.id, text])
                 if lvl > 1: continue # just fetch comments of comments, not comments^3
                 print("Expanding comments....")
                 self.sc.expand_comment(comment.id)
