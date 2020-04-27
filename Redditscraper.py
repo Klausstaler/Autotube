@@ -166,6 +166,7 @@ class Subreddit:
             if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
                     and not _check_text(comment.body):
                 text = _clean_str(comment.body.strip())
+                if len(text) > 3500: continue  # ignore comments which are too long
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 print("Screenshotting comment...")
                 try:
