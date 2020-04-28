@@ -23,7 +23,7 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "afaik": "as far as I know",
                "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
                "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
-               "faq": "frequently asked questions"}
+               "faq": "frequently asked questions", "itd": "it would be"}
 
 class TimeFilter(Enum):
     DAY = "day"
