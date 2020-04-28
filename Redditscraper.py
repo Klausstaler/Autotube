@@ -54,9 +54,12 @@ def _check_text(text):
 
 
 def _clean_str(text):
-    text = re.sub("http\S+", lambda match: f" .. {urlparse(match.group()).hostname} link", text)  # replace
+    try:
+        text = re.sub("http\S+", lambda match: f" .. {urlparse(match.group()).hostname} link", text)  # replace
+    except ValueError:
+        pass
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
-                  lambda x: " .. {} link".format("re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0]"),
+                  lambda x: " .. {} link".format(re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0]),
                   text)  # link with [url].com link
     new_text = []
     char_buffer = []
