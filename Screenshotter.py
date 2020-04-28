@@ -110,7 +110,7 @@ class Screenshotter:
         if len(self.driver.page_source) > 300:
             discussion_path = "//button[starts-with(text(),'View entire discussion')]"
             entire_discussion = self._explicit_selector(By.XPATH, discussion_path)
-            entire_discussion.click()
+            self.driver.execute_script("arguments[0].click();", entire_discussion)
 
     def screenshot_title(self, path):
         elem = self._explicit_selector(By.ID, f"t3_{self.id}")

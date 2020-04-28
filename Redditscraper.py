@@ -47,7 +47,7 @@ class UnsuitableThreadErr(Exception):
 
 def _check_text(text):
     for char in text:
-        if char not in "/’()*^\\\"<>[]\'~":
+        if char not in "/’()”*^\\\"<>[]\'~":
             if not (0 <= ord(char) <= 127):  # remove unicode chars
                 return True
     return classify(text)
