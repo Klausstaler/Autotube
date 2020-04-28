@@ -63,6 +63,7 @@ def _clean_str(text):
                   text)  # link with [url].com link
     new_text = []
     char_buffer = []
+    text = text.replace("/", " SLASH ")
     for i, char in enumerate(text):
         if len(char_buffer) < 3:
             char_buffer.append(char)
@@ -74,13 +75,13 @@ def _clean_str(text):
         if char == "\n" or char == "\t":
             new_text.append(".")
         elif char not in "/’()”*^\\\"<>[]\'~":
-            new_text.append(char.lower())
+            new_text.append(char)
     new_text = "".join(new_text)
     text = []
     for word in new_text.split():  # replaces abbreviations
         stripped_word = word.strip(",.")
-        if stripped_word in abbrev_dict:
-            new_word = abbrev_dict[stripped_word]
+        if stripped_word.lower() in abbrev_dict:
+            new_word = abbrev_dict[stripped_word.lower()]
             if stripped_word != word:
                 new_word += "."
             text.append(new_word)
