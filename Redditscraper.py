@@ -24,6 +24,7 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
                "faq": "frequently asked questions", "itd": "it would be", "op": "original poster"}
 
+# enum for all timefilters accepted by reddit
 class TimeFilter(Enum):
     DAY = "day"
     WEEK = "week"
@@ -31,7 +32,7 @@ class TimeFilter(Enum):
     YEAR = "year"
     ALL = "all"
 
-
+# enum for all sorting methods accepted by reddit
 class SortMethod(Enum):
     NEW = "new"
     BEST = "confidence"
@@ -45,14 +46,24 @@ class UnsuitableThreadErr(Exception):
 
 
 def _check_text(text):
+    """
+    Checks if unicode characters are in text (as cmdline can't deal with them) and if it's offensive content.
+    :param text: string
+    :return: bool
+    """
     for char in text:
         if char not in "/’()”*^\\\"<>[]\'~":
-            if not (0 <= ord(char) <= 127):  # remove unicode chars
+            if not (0 <= ord(char) <= 127):
                 return True
     return classify(text)
 
 
 def _clean_str(text):
+    """
+    Cleans string for better TtS
+    :param text: string
+    :return: string
+    """
     try:
         text = re.sub("http\S+", lambda match: f" .. {urlparse(match.group()).hostname} link", text)  # replace
     except ValueError:
@@ -71,7 +82,7 @@ def _clean_str(text):
             if len(char_buffer) > 0: char_buffer.pop(0)
             if not char.isdigit():
                 char_buffer.append(char)
-                if len(set(char_buffer)) == 1:
+                if len(set(char_buffer)) == 1: # do not append same character more than three times
                     continue
         if char == "\n" or char == "\t":
             new_text.append(".")
@@ -92,6 +103,11 @@ def _clean_str(text):
 
 
 def _remove_parenthesis(string):
+    """
+    Removes text in parentheses
+    :param string: string
+    :return: string
+    """
     res = ''
     count = 0
     for i in string:
@@ -112,6 +128,14 @@ class Subreddit:
             self.visited = set([ID.strip() for ID in f.readlines()])
 
     def get_top(self, n, timefilter):
+        """
+        Returns the posts which are under the top n, which have not been visited yet.
+        :param n: int
+                the top results up to n
+        :param timefilter: TimeFilter
+                which timefilter should be used
+        :return: list[Submission]
+        """
         timefilter = TimeFilter(timefilter)
         with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
@@ -126,6 +150,12 @@ class Subreddit:
         return top
 
     def create_screenshots(self, post, order):
+        """
+        Creates screenshots for this post
+        :param post: Submission
+        :param order: SortMethod
+        :return: None
+        """
         order = SortMethod(order)
         with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
