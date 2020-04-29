@@ -23,7 +23,7 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "afaik": "as far as I know",
                "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
                "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
-               "faq": "frequently asked questions", "itd": "it would be"}
+               "faq": "frequently asked questions", "itd": "it would be", "op": "original poster"}
 
 class TimeFilter(Enum):
     DAY = "day"
@@ -64,14 +64,16 @@ def _clean_str(text):
     new_text = []
     char_buffer = []
     text = text.replace("/", " SLASH ")
+    text = text.replace("#", " hashtag ")
     for i, char in enumerate(text):
         if len(char_buffer) < 3:
             char_buffer.append(char)
         else:
-            char_buffer.pop(0)
-            char_buffer.append(char)
-            if len(set(char_buffer)) == 1:
-                continue
+            if len(char_buffer) > 0: char_buffer.pop(0)
+            if not char.isdigit():
+                char_buffer.append(char)
+                if len(set(char_buffer)) == 1:
+                    continue
         if char == "\n" or char == "\t":
             new_text.append(".")
         elif char not in "/’()”*^\\\"<>[]\'~":
