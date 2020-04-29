@@ -185,7 +185,7 @@ class Subreddit:
         f = open(path, "wb")
         pickle.dump(res, f)
         f.close()
-        return path[8:]
+        return path
 
     def _create_instr_help(self, comments, prevScore, instructions, lvl):
         """
