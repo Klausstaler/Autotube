@@ -10,12 +10,11 @@ from AudioType import AudioType
 CLIENT_ID = os.getenv("CLIENT_ID_REDDIT")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_REDDIT")
 USER_AGENT = "Autotube"
-SCORE_THRESHOLD = 1000
-SCORE_COMMENT_RATIO = 0.3
-COMMENT_THRESHOLD = 100
+
 reddit = praw.Reddit(client_id=CLIENT_ID,
                      client_secret=CLIENT_SECRET,
                      user_agent=USER_AGENT)
+#  abbreviation dict for common abbreviations
 abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be right back", "lmk": "let me know",
                "g2g": "got to go", "btw": "by the way", "rt": "retweet", "ama": "ask me anything",
                "tbh": "to be honest",
