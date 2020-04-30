@@ -13,4 +13,4 @@
 - [ ] alternate btw colors in ThumbnailGen (skip that)
 - [ ] automatic thumbnail generation (skip that)
 - [ ] video description
-- [ ] fix nasty issue with screenshots. sometimes they aren't aligned perfectly, check if its because page wasnt fully loaded
+- [x] fix nasty issue with screenshots. sometimes they aren't aligned perfectly, check if its because page wasnt fully loaded

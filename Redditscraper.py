@@ -22,7 +22,7 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "afaik": "as far as I know",
                "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
                "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
-               "faq": "frequently asked questions", "itd": "it would be", "op": "original poster"}
+               "faq": "frequently asked questions", "itd": "it would be", "op": "original poster", "itt": "in this thread"}
 
 # enum for all timefilters accepted by reddit
 class TimeFilter(Enum):
@@ -52,7 +52,7 @@ def _check_text(text):
     :return: bool
     """
     for char in text:
-        if char not in "/’()”*^\\\"<>[]\'~":
+        if char not in "/()”*^\\\"<>[]\'~":
             if not (0 <= ord(char) <= 127):
                 return True
     return classify(text)
@@ -86,7 +86,7 @@ def _clean_str(text):
                     continue
         if char == "\n" or char == "\t":
             new_text.append(".")
-        elif char not in "/’()”*^\\\"<>[]\'~":
+        elif char not in "/()”*^\\\"<>[]~":
             new_text.append(char)
     new_text = "".join(new_text)
     text = []
@@ -173,7 +173,7 @@ class Subreddit:
             return path
         else:
             raise UnsuitableThreadErr(
-                "Will not make screenshots. Either thread was already visited or has inappropiate "
+                "Will not make screenshots. Either thread was already visited or has inappropriate "
                 "words in title!")
 
     def _create_instr(self, post):
@@ -201,7 +201,7 @@ class Subreddit:
             if comment.score >= max(25, prevScore * 0.2) and comment.body not in ["[deleted]", "[removed]"] \
                     and not _check_text(comment.body):
                 text = _clean_str(comment.body.strip())
-                if len(text) > 3500: continue  # ignore comments which are too long
+                if len(text) > 3500 or len(text) < 2: continue  # ignore comments which are too long and too short. (pydub issues)
                 print("NEW_COMMENT" if not prevScore else "SUB_COMMENT", text, comment.id)
                 print("Screenshotting comment...")
                 try:
