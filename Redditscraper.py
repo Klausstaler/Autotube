@@ -20,9 +20,10 @@ abbrev_dict = {"dm": "direct message", "smh": "shaking my head", "brb": "be righ
                "tbh": "to be honest",
                "imo": "in my opinion", "imho": "in my humble opinion", "irl": "in real life",
                "afaik": "as far as I know",
-               "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "works for me",
+               "ack": "acknowledgment", "thx": "thanks", "tba": "to be announced", "wtf": "what the duck",
                "tia": "thanks in advance", "nvm": "never mind", "w8": "wait", "wb": "welcome back",
-               "faq": "frequently asked questions", "itd": "it would be", "op": "original poster", "itt": "in this thread"}
+               "faq": "frequently asked questions", "itd": "it would be", "op": "original poster",
+               "itt": "in this thread", "ty": "thank you", "gf": "girlfriend"}
 
 # enum for all timefilters accepted by reddit
 class TimeFilter(Enum):
