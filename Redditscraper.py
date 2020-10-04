@@ -1,4 +1,5 @@
 import praw, os, pickle, datetime, re
+from contextlib import suppress
 from praw.models import MoreComments
 from Screenshotter import Screenshotter
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -65,10 +66,8 @@ def _clean_str(text):
     :param text: string
     :return: string
     """
-    try:
+    with suppress(ValueError):
         text = re.sub("http\S+", lambda match: f" .. {urlparse(match.group()).hostname} link", text)  # replace
-    except ValueError:
-        pass
     text = re.sub('https*://[\w\.]+\.com[\w/\-]+|https*://[\w\.]+\.com|[\w\.]+\.com/[\w/\-]+',
                   lambda x: " .. {} link".format(re.findall('(?<=\://)[\w\.]+\.com|[\w\.]+\.com', x.group())[0]),
                   text)  # link with [url].com link
@@ -140,14 +139,7 @@ class Subreddit:
         timefilter = TimeFilter(timefilter)
         with open("resources/visited.txt", "r") as f:
             self.visited = set([ID.strip() for ID in f.readlines()])
-        top = [post for post in self.sub.top(limit=n, time_filter=timefilter.value)]
-        i = 0
-        while i < len(top):
-            post = top[i]
-            if post.id in self.visited:
-                del top[i]
-            else:
-                i += 1
+        top = [post for post in self.sub.top(limit=n, time_filter=timefilter.value) if post.id not in self.visited]
         return top
 
     def create_screenshots(self, post, order):
@@ -194,8 +186,8 @@ class Subreddit:
         """
         comment_counter = 0
         for comment in comments:
-            if comment_counter > 100:
-                print("Already saved more than hundred screenshots!... Gonna break outta here")
+            if comment_counter > 50:
+                print("Already saved more than 75 screenshots!... Gonna break outta here")
                 break
             if isinstance(comment, MoreComments):
                 continue

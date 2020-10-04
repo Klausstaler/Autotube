@@ -25,12 +25,12 @@ def draw_text(img_draw, text, color):
 
 def find_fontsize(img_draw, text):
     font_size = 128
-    font = ImageFont.truetype("C:/Windows/Fonts/ARLRDBD.TTF", font_size)
+    font = ImageFont.truetype("resources/fonts/BowlbyOneSC-Regular.ttf", font_size)
     text_size = img_draw.textsize(text, font)
     num_rows = (IMG_HEIGHT // text_size[1])
     while text_size[0] // num_rows >= IMG_WIDTH:
         font_size -= 1
-        font = ImageFont.truetype("C:/Windows/Fonts/ARLRDBD.TTF", font_size)
+        font = ImageFont.truetype("resources/fonts/BowlbyOneSC-Regular.ttf", font_size)
         text_size = img_draw.textsize(text, font)
         num_rows = (IMG_HEIGHT // text_size[1])
     return font

@@ -15,6 +15,7 @@ chrome_options.add_argument("--start-maximized")
 #chrome_options.headless = True
 SCROLL_PAUSE_TIME = 0.5
 
+
 def _stitch_img(img1, img2):
     (width1, height1) = img1.size
     (width2, height2) = img2.size
@@ -57,27 +58,29 @@ class Screenshotter:
             ActionChains(self.driver).move_to_element(elem).perform()
             self.driver.execute_script("arguments[0].click();", elem)
             self._scrollpage()
-            self._screenshot_comment(ID, path, 0)
+            self._screenshot_comment(ID, path)
         time.sleep(0.5)
 
-    def _screenshot_comment(self, ID, path, d):
-        if d > 10:
-            raise NoSuchElementException
-        try:
-            elem = self._explicit_selector(By.ID, f"t1_{ID}")
-            self._screenshot(elem, path + ".png")
-        except (NoSuchElementException, TimeoutException) as e:
-            more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']"
-            elem = self._explicit_selector(By.XPATH, more_comments_path)
-            ActionChains(self.driver).move_to_element(elem).perform()
-            elem.click()
-            self._scrollpage()
-            self._screenshot_comment(ID, path, d + 1)
+    def _screenshot_comment(self, ID, path, max_retries=10):
+        tries = 1
+        success = False
+        while not success and tries <= max_retries:
+            try:
+                elem = self._explicit_selector(By.ID, f"t1_{ID}")
+                self._screenshot(elem, path + ".png")
+                success = True
+            except (NoSuchElementException, TimeoutException) as e:
+                more_comments_path = "//div[starts-with(@id,'moreComments') and @style='padding-left: 0px;']" # just expand more comments and try again
+                elem = self._explicit_selector(By.XPATH, more_comments_path)
+                ActionChains(self.driver).move_to_element(elem).perform()
+                elem.click()
+                self._scrollpage()
+                tries += 1
 
     def _screenshot(self, element, path):
         location = element.location_once_scrolled_into_view
-        if location['y'] > 3:
-            time.sleep(5)
+        if location['y'] > 3: # as we don't necessarily have any knowledge of when the page is fully loaded, we just
+            time.sleep(5) # check for the location
             location = element.location_once_scrolled_into_view
         size = element.size
         im = Image.new("RGB", (0, 0))
@@ -86,7 +89,7 @@ class Screenshotter:
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
         self.driver.execute_script(
             f"window.scrollBy(0,{(-1)*HEADER_HEIGHT + location['y']});")  # scroll up by this amount to avoid header
-        print((-1)*HEADER_HEIGHT + location['y'])
+
         while size["height"] > 0:  # stitch comment pieces together until we screenshotted whole comment
             png = self.driver.get_screenshot_as_png()  # saves screenshot of entire page
             new_img = Image.open(BytesIO(png))  # uses PIL library to open image in memory
@@ -94,7 +97,7 @@ class Screenshotter:
             top = HEADER_HEIGHT
             right = location['x'] + size['width']
             sc_height = size['height'] + HEADER_HEIGHT
-            max_sc_height = min(sc_height, TAB_HEIGHT)  # the maximum height of the comment is limited by the tab
+            max_sc_height = min(sc_height, TAB_HEIGHT)  # the maximum height of the comment is limited by the tab size
             bottom = max_sc_height  # size and the comment size
             new_img = new_img.crop((left, top, right, bottom))  # defines crop points
             im = _stitch_img(im, new_img)
@@ -118,22 +121,17 @@ class Screenshotter:
         self._screenshot(elem, path + ".png")
 
     def _scrollpage(self):
-
         # Get scroll height
         last_height = self.driver.execute_script("return document.body.scrollHeight")
-
         while True:
             # Scroll down to bottom
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-            # Wait to load page
             time.sleep(SCROLL_PAUSE_TIME)
-
             # Calculate new scroll height and compare with last scroll height
             new_height = self.driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
                 break
             last_height = new_height
 
-    def _explicit_selector(self, method, logic):
+    def _explicit_selector(self, method, logic): # selects element while waiting until it appears
         return WebDriverWait(self.driver, self.delay).until(EC.presence_of_element_located((method, logic)))
