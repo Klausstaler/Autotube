@@ -1,3 +1,6 @@
+# Autotube
+Some stupid project I did during COVID. Basically scratches reddit threads, screenshots comments and creates a video with Text To Speech out of it. Includes a profanity detector, so that we could (eventually) get that sweeet AdSense moneeey. Free Lofi Beats to study and relax to as background music. Sample videos can be found [here](https://www.youtube.com/channel/UC44--yQlC2HI28oExbxcdbw/videos)
+
 ## TODO:
 
 - [ ] hide sentences
